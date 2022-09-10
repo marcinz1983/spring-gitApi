@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 public class ApiClientImpl {
 
     private final RestTemplate restTemplate;
+    static final String HOST_GIT_HUB_FOR_ALL_REPO = "https://api.github.com/users/";
+    static final String HOST_GIT_HUB_FOR_ALL_BRANCHES = "https://api.github.com/repos/";
 
     @Autowired
     public ApiClientImpl(RestTemplate restTemplate) {
@@ -31,22 +33,23 @@ public class ApiClientImpl {
 
     public ResponseEntity<List<RepoResponseDto>> getAllRepositoriesByUser(String user) {
 
-        ResponseEntity<RepositoryRequestDTO[]> response = restTemplate.getForEntity("https://api.github.com/users/" + user + "/repos", RepositoryRequestDTO[].class);
-        var result = Arrays.stream(response.getBody())
+        ResponseEntity<RepositoryRequestDTO[]> response = restTemplate.getForEntity(HOST_GIT_HUB_FOR_ALL_REPO + user + "/repos", RepositoryRequestDTO[].class);
+        Map<RepositoryRequestDTO, BranchRequestDTO[]> result = Arrays.stream(response.getBody())
                 .filter(x -> x.getFork().equals(false))
-                .collect(Collectors.toMap(x -> x, x -> restTemplate.getForEntity("https://api.github.com/repos/" + x.getOwner().getLogin() + "/" + x.getName() + "/branches", BranchRequestDTO[].class).getBody()));
-        List<RepoResponseDto> gotowa = new ArrayList<>();
+                .collect(Collectors.toMap(x -> x,
+                        x -> restTemplate.getForEntity(HOST_GIT_HUB_FOR_ALL_BRANCHES
+                                + x.getOwner().getLogin() + "/" + x.getName()
+                                + "/branches", BranchRequestDTO[].class).getBody()));
 
+        List<RepoResponseDto> repoList = new ArrayList<>();
         for (Map.Entry<RepositoryRequestDTO, BranchRequestDTO[]> pair : result.entrySet()) {
             List<BranchResponseDTO> branchResponseDTOS = new ArrayList<>();
             for (BranchRequestDTO br : pair.getValue()) {
                 branchResponseDTOS.add(new BranchResponseDTO(br.getName(), br.getCommit().getSha()));
             }
-            gotowa.add(new RepoResponseDto(pair.getKey().getName(), pair.getKey().getOwner().getLogin(), branchResponseDTOS));
+            repoList.add(new RepoResponseDto(pair.getKey().getName(), pair.getKey().getOwner().getLogin(), branchResponseDTOS));
         }
-
-        return new ResponseEntity<>(gotowa, HttpStatus.OK);
-
+        return new ResponseEntity<>(repoList, HttpStatus.OK);
     }
 
 }
