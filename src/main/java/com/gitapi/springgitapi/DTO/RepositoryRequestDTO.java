@@ -14,18 +14,11 @@ import lombok.ToString;
 @Builder
 @Getter
 @Setter
-public class LicenseDTO {
-
-    private String key;
+public class RepositoryRequestDTO {
 
     private String name;
-
-    @JsonProperty("spdx_id")
-    private String spdxId;
-
-    private String url;
-
-    @JsonProperty("node_id")
-    private String nodeId;
+    private OwnerRequestDTO owner;
+    private Boolean fork;
+    private String branchesUrl;
 
 }
