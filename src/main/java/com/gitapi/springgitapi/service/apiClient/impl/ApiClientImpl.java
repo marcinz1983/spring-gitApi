@@ -5,6 +5,7 @@ import com.gitapi.springgitapi.DTO.BranchRequestDTO;
 import com.gitapi.springgitapi.DTO.BranchResponseDTO;
 import com.gitapi.springgitapi.DTO.RepoResponseDto;
 import com.gitapi.springgitapi.DTO.RepositoryRequestDTO;
+import com.gitapi.springgitapi.service.apiClient.ApiClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 
 @Service
-public class ApiClientImpl {
+public class ApiClientImpl implements ApiClient {
 
     private final RestTemplate restTemplate;
     static final String HOST_GIT_HUB_FOR_ALL_REPO = "https://api.github.com/users/";
@@ -32,16 +33,16 @@ public class ApiClientImpl {
     }
 
     public ResponseEntity<List<RepoResponseDto>> getAllRepositoriesByUser(String user) {
-
-        ResponseEntity<RepositoryRequestDTO[]> response = restTemplate.getForEntity(HOST_GIT_HUB_FOR_ALL_REPO + user + "/repos", RepositoryRequestDTO[].class);
-        Map<RepositoryRequestDTO, BranchRequestDTO[]> result = Arrays.stream(response.getBody())
-                .filter(x -> x.getFork().equals(false))
-                .collect(Collectors.toMap(x -> x,
-                        x -> restTemplate.getForEntity(HOST_GIT_HUB_FOR_ALL_BRANCHES
-                                + x.getOwner().getLogin() + "/" + x.getName()
-                                + "/branches", BranchRequestDTO[].class).getBody()));
-
+        ResponseEntity<RepositoryRequestDTO[]> responseFromGitApi = restTemplate.getForEntity(HOST_GIT_HUB_FOR_ALL_REPO +
+                user + "/repos", RepositoryRequestDTO[].class);
+        Map<RepositoryRequestDTO, BranchRequestDTO[]> result = getMapRepo(responseFromGitApi);
         List<RepoResponseDto> repoList = new ArrayList<>();
+        createRepoResponse(result, repoList);
+        return new ResponseEntity<>(repoList, HttpStatus.OK);
+    }
+
+
+    private void createRepoResponse(Map<RepositoryRequestDTO, BranchRequestDTO[]> result, List<RepoResponseDto> repoList) {
         for (Map.Entry<RepositoryRequestDTO, BranchRequestDTO[]> pair : result.entrySet()) {
             List<BranchResponseDTO> branchResponseDTOS = new ArrayList<>();
             for (BranchRequestDTO br : pair.getValue()) {
@@ -49,7 +50,15 @@ public class ApiClientImpl {
             }
             repoList.add(new RepoResponseDto(pair.getKey().getName(), pair.getKey().getOwner().getLogin(), branchResponseDTOS));
         }
-        return new ResponseEntity<>(repoList, HttpStatus.OK);
+    }
+
+    private Map<RepositoryRequestDTO, BranchRequestDTO[]> getMapRepo(ResponseEntity<RepositoryRequestDTO[]> responseFromGitApi) {
+        return Arrays.stream(responseFromGitApi.getBody())
+                .filter(x -> x.getFork().equals(false))
+                .collect(Collectors.toMap(x -> x,
+                        x -> restTemplate.getForEntity(HOST_GIT_HUB_FOR_ALL_BRANCHES
+                                + x.getOwner().getLogin() + "/" + x.getName()
+                                + "/branches", BranchRequestDTO[].class).getBody()));
     }
 
 }

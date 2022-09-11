@@ -1,4 +1,4 @@
-## InIT - GitHub API Service to find All repositories by user
+## GitHub API Service to find All repositories by user
 
 ### Stack :rocket:
 - Java
@@ -9,5 +9,5 @@
 
 ### Example endpoint from local machine: 
 - fill the field "??????"
-http://localhost:8080/repository/getRepoByUser?user=??????
+http://localhost:8080/repository/getrepo?user=??????
 

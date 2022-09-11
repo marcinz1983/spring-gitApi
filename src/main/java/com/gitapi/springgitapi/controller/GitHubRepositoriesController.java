@@ -1,7 +1,7 @@
 package com.gitapi.springgitapi.controller;
 
 import com.gitapi.springgitapi.DTO.RepoResponseDto;
-import com.gitapi.springgitapi.service.apiClient.impl.ApiClientImpl;
+import com.gitapi.springgitapi.service.apiClient.ApiClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,14 +15,14 @@ import java.util.List;
 @RequestMapping("/repository")
 public class GitHubRepositoriesController {
 
-    private  final ApiClientImpl apiClient;
+    private  final ApiClient apiClient;
 
     @Autowired
-    public GitHubRepositoriesController(ApiClientImpl apiClient) {
+    public GitHubRepositoriesController(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
 
-    @GetMapping("/getRepoByUser")
+    @GetMapping("/getrepo")
     public ResponseEntity<List<RepoResponseDto>> getAll(@RequestParam(required = true) String user){
         return apiClient.getAllRepositoriesByUser(user);
     }
