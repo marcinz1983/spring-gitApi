@@ -26,8 +26,21 @@ public class ApplicationExceptionHandler {
         logger.warn("User not found exception has occurred", exception);
         return ResponseEntity.badRequest().body(
                 new ExceptionResponse(
-                        HttpStatus.BAD_REQUEST.value(),
+                        HttpStatus.NOT_FOUND.value(),
                         "GitHub user with this user name does not exist"
+                )
+        );
+    }
+
+
+    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class
+            , org.springframework.web.bind.MissingServletRequestParameterException.class})
+    public ResponseEntity<ExceptionResponse> handleBadRequestException(Exception exception) {
+        logger.warn("Bad request exception has occurred", exception);
+        return ResponseEntity.badRequest().body(
+                new ExceptionResponse(
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Wrong query format, query requires a valid parameter"
                 )
         );
     }
