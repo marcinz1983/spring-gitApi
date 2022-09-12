@@ -46,7 +46,11 @@ public class ApiClientImpl implements ApiClient {
             for (BranchRequestDTO br : pair.getValue()) {
                 branchResponseDTOS.add(new BranchResponseDTO(br.getName(), br.getCommit().getSha()));
             }
-            repoList.add(new RepoResponseDto(pair.getKey().getName(), pair.getKey().getOwner().getLogin(), branchResponseDTOS));
+            repoList.add(RepoResponseDto.builder()
+                    .name(pair.getKey().getName())
+                    .login(pair.getKey().getOwner().getLogin())
+                    .branches(branchResponseDTOS)
+                    .build());
         }
         return repoList;
     }
