@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface ApiClient {
 
-    ResponseEntity<List<RepoResponseDto>> getAllRepositoriesByUser(String user);
+    List<RepoResponseDto> getAllRepositoriesByUser(String user);
 
 }

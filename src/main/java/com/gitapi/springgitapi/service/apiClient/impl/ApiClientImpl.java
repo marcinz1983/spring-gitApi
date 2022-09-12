@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 public class ApiClientImpl implements ApiClient {
 
     private final RestTemplate restTemplate;
-    static final String HOST_GIT_HUB_FOR_ALL_REPO = "https://api.github.com/users/";
-    static final String HOST_GIT_HUB_FOR_ALL_BRANCHES = "https://api.github.com/repos/";
+    static final String HOST_GIT_HUB_FOR_ALL_REPO = "https://api.github.com/users/{user}/repos";
+    static final String HOST_GIT_HUB_FOR_ALL_BRANCHES = "https://api.github.com/repos/{login}/{name}/branches";
 
     @Autowired
     public ApiClientImpl(RestTemplate restTemplate) {
@@ -32,17 +32,15 @@ public class ApiClientImpl implements ApiClient {
 
     }
 
-    public ResponseEntity<List<RepoResponseDto>> getAllRepositoriesByUser(String user) {
-        ResponseEntity<RepositoryRequestDTO[]> responseFromGitApi = restTemplate.getForEntity(HOST_GIT_HUB_FOR_ALL_REPO +
-                user + "/repos", RepositoryRequestDTO[].class);
+    public List<RepoResponseDto> getAllRepositoriesByUser(String user) {
+        RepositoryRequestDTO[] responseFromGitApi = getForGITApiResponse(HOST_GIT_HUB_FOR_ALL_REPO, RepositoryRequestDTO[].class, user);
         Map<RepositoryRequestDTO, BranchRequestDTO[]> result = getMapRepo(responseFromGitApi);
-        List<RepoResponseDto> repoList = new ArrayList<>();
-        createRepoResponse(result, repoList);
-        return new ResponseEntity<>(repoList, HttpStatus.OK);
+        return createRepoResponse(result);
     }
 
 
-    private void createRepoResponse(Map<RepositoryRequestDTO, BranchRequestDTO[]> result, List<RepoResponseDto> repoList) {
+    private List<RepoResponseDto> createRepoResponse(Map<RepositoryRequestDTO, BranchRequestDTO[]> result) {
+        List<RepoResponseDto> repoList = new ArrayList<>();
         for (Map.Entry<RepositoryRequestDTO, BranchRequestDTO[]> pair : result.entrySet()) {
             List<BranchResponseDTO> branchResponseDTOS = new ArrayList<>();
             for (BranchRequestDTO br : pair.getValue()) {
@@ -50,15 +48,19 @@ public class ApiClientImpl implements ApiClient {
             }
             repoList.add(new RepoResponseDto(pair.getKey().getName(), pair.getKey().getOwner().getLogin(), branchResponseDTOS));
         }
+        return repoList;
     }
 
-    private Map<RepositoryRequestDTO, BranchRequestDTO[]> getMapRepo(ResponseEntity<RepositoryRequestDTO[]> responseFromGitApi) {
-        return Arrays.stream(responseFromGitApi.getBody())
+    private Map<RepositoryRequestDTO, BranchRequestDTO[]> getMapRepo(RepositoryRequestDTO[] responseFromGitApi) {
+        return Arrays.stream(responseFromGitApi)
                 .filter(x -> x.getFork().equals(false))
                 .collect(Collectors.toMap(x -> x,
-                        x -> restTemplate.getForEntity(HOST_GIT_HUB_FOR_ALL_BRANCHES
-                                + x.getOwner().getLogin() + "/" + x.getName()
-                                + "/branches", BranchRequestDTO[].class).getBody()));
+                        x -> getForGITApiResponse(HOST_GIT_HUB_FOR_ALL_BRANCHES, BranchRequestDTO[].class, x.getOwner().getLogin(), x.getName())));
     }
+
+    private <T> T getForGITApiResponse(String url, Class<T> responseType, Object... objects) {
+        return restTemplate.getForObject(url, responseType, objects);
+    }
+
 
 }

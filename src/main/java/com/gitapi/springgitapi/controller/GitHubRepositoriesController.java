@@ -3,6 +3,7 @@ package com.gitapi.springgitapi.controller;
 import com.gitapi.springgitapi.DTO.RepoResponseDto;
 import com.gitapi.springgitapi.service.apiClient.ApiClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +25,8 @@ public class GitHubRepositoriesController {
 
     @GetMapping("/getrepo")
     public ResponseEntity<List<RepoResponseDto>> getAll(@RequestParam(required = true) String user){
-        return apiClient.getAllRepositoriesByUser(user);
+        List<RepoResponseDto> result = apiClient.getAllRepositoriesByUser(user);
+        return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
 }
