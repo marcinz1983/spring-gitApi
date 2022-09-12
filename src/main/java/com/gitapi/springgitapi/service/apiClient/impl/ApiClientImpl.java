@@ -7,8 +7,7 @@ import com.gitapi.springgitapi.DTO.RepoResponseDto;
 import com.gitapi.springgitapi.DTO.RepositoryRequestDTO;
 import com.gitapi.springgitapi.service.apiClient.ApiClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,6 +31,7 @@ public class ApiClientImpl implements ApiClient {
 
     }
 
+    @Cacheable(cacheNames = "Response from GutHub API cache")
     public List<RepoResponseDto> getAllRepositoriesByUser(String user) {
         RepositoryRequestDTO[] responseFromGitApi = getForGITApiResponse(HOST_GIT_HUB_FOR_ALL_REPO, RepositoryRequestDTO[].class, user);
         Map<RepositoryRequestDTO, BranchRequestDTO[]> result = getMapRepo(responseFromGitApi);
@@ -62,7 +62,8 @@ public class ApiClientImpl implements ApiClient {
                         x -> getForGITApiResponse(HOST_GIT_HUB_FOR_ALL_BRANCHES, BranchRequestDTO[].class, x.getOwner().getLogin(), x.getName())));
     }
 
-    private <T> T getForGITApiResponse(String url, Class<T> responseType, Object... objects) {
+
+    private   <T> T getForGITApiResponse(String url, Class<T> responseType, Object... objects) {
         return restTemplate.getForObject(url, responseType, objects);
     }
 
